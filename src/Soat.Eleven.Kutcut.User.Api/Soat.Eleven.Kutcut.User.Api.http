@@ -1,0 +1,6 @@
+@Soat.Eleven.Kutcut.User.Api_HostAddress = http://localhost:5208
+
+GET {{Soat.Eleven.Kutcut.User.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
