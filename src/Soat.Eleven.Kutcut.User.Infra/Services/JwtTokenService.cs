@@ -47,7 +47,7 @@ public class JwtTokenService : IJwtTokenService
         };
 
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(configuration["SECRET_KEY_PASSWORD"]!);
+        var key = Encoding.ASCII.GetBytes(configuration["JwtSettings:SecretKey"]!);
         var expirationDate = DateTime.UtcNow.AddHours(2);
 
         var tokenDescriptor = new SecurityTokenDescriptor

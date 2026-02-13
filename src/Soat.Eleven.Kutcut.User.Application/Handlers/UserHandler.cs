@@ -5,6 +5,7 @@ using Soat.Eleven.Kutcut.Users.Application.Interfaces;
 using Soat.Eleven.Kutcut.Users.Domain.Entities;
 using Soat.Eleven.Kutcut.Users.Domain.Enums;
 using Soat.Eleven.Kutcut.Users.Domain.Interfaces.Repositories;
+using Soat.Eleven.Kutcut.Users.Domain.Interfaces.Services;
 
 namespace Soat.Eleven.Kutcut.Users.Application.Handlers;
 
@@ -15,18 +16,24 @@ public class UserHandler : IUserHandler
     private readonly IValidator<UpdateUserInput> _updateUserValidator;
     private readonly IValidator<DeactiveUserInput> _deactiveUserValidator;
     private readonly IValidator<GetUserInput> _getUserValidator;
+    private readonly IJwtTokenService _jwtTokenService;
+    private readonly IPasswordService _passwordService;
 
     public UserHandler(IUserRepository userRepository,
                        IValidator<CreateUserInput> createUserValidator,
                        IValidator<UpdateUserInput> updateUserValidator,
                        IValidator<DeactiveUserInput> deactiveUserValidator,
-                       IValidator<GetUserInput> getUserValidator)
+                       IValidator<GetUserInput> getUserValidator,
+                       IJwtTokenService jwtTokenService,
+                       IPasswordService passwordService)
     {
         _userRepository = userRepository;
         _createUserValidator = createUserValidator;
         _updateUserValidator = updateUserValidator;
         _deactiveUserValidator = deactiveUserValidator;
         _getUserValidator = getUserValidator;
+        _jwtTokenService = jwtTokenService;
+        _passwordService = passwordService;
     }
 
     public async Task<CreateUserOutput> HandleAsync(CreateUserInput input)
@@ -37,14 +44,13 @@ public class UserHandler : IUserHandler
             throw new ValidationException(validationResult.Errors);
         }
 
+        var passwordHash = _passwordService.TransformToHash(input.Password);
+
         var user = new User
         {
             Name = input.Name,
             Email = input.Email,
-            Password = input.Password,
-            Active = StatusUser.Active,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            Password = passwordHash,
         };
 
         await _userRepository.CreateAsync(user);
@@ -54,13 +60,14 @@ public class UserHandler : IUserHandler
             Id = user.Id,
             Name = user.Name,
             Email = user.Email,
-            Active = user.Active,
+            Active = user.Status,
             CreatedAt = user.CreatedAt
         };
     }
 
     public async Task<UpdateUserOutput> HandleAsync(UpdateUserInput input)
     {
+        input.Id = _jwtTokenService.GetUsuarioId();
         var validationResult = await _updateUserValidator.ValidateAsync(input);
         if (!validationResult.IsValid)
         {
@@ -75,11 +82,12 @@ public class UserHandler : IUserHandler
 
         user.Name = input.Name;
         user.Email = input.Email;
-        if (!string.IsNullOrEmpty(input.Password))
+
+        var passwordHash = _passwordService.TransformToHash(input.Password);
+        if (!user.Password.Equals(passwordHash))
         {
-            user.Password = input.Password;
+            user.Password = passwordHash;
         }
-        user.UpdatedAt = DateTime.UtcNow;
 
         await _userRepository.UpdateAsync(user);
 
@@ -88,7 +96,7 @@ public class UserHandler : IUserHandler
             Id = user.Id,
             Name = user.Name,
             Email = user.Email,
-            Active = user.Active,
+            Active = user.Status,
             UpdatedAt = user.UpdatedAt
         };
     }
@@ -107,7 +115,7 @@ public class UserHandler : IUserHandler
             throw new Exception($"Usuário com ID {input.Id} não encontrado.");
         }
 
-        user.Active = (byte)StatusUser.Inactive;
+        user.Status = (byte)StatusUser.Inactive;
         user.UpdatedAt = DateTime.UtcNow;
 
         await _userRepository.UpdateAsync(user);
@@ -115,7 +123,7 @@ public class UserHandler : IUserHandler
         return new DeactiveUserOutput
         {
             Id = user.Id,
-            Active = user.Active,
+            Active = user.Status,
             UpdatedAt = user.UpdatedAt,
             Message = "Usuário desativado com sucesso."
         };
@@ -129,7 +137,7 @@ public class UserHandler : IUserHandler
             throw new ValidationException(validationResult.Errors);
         }
 
-        User user = null;
+        User? user = null;
 
         if (input.Id != Guid.Empty)
         {
@@ -150,7 +158,7 @@ public class UserHandler : IUserHandler
             Id = user.Id,
             Name = user.Name,
             Email = user.Email,
-            Active = user.Active,
+            Active = user.Status,
             CreatedAt = user.CreatedAt,
             UpdatedAt = user.UpdatedAt
         };

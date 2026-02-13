@@ -17,7 +17,7 @@ public class UserDataContext(DbContextOptions<UserDataContext> options) : DbCont
         
         modelBuilder.Entity<User>()
                     .Property(u => u.Id)
-                    .HasDefaultValue("gen_random_uuid()");
+                    .HasDefaultValueSql("gen_random_uuid()");
         
         modelBuilder.Entity<User>()
                     .Property(u => u.Name)
@@ -33,21 +33,22 @@ public class UserDataContext(DbContextOptions<UserDataContext> options) : DbCont
                     .Property(u => u.Password)
                     .IsRequired()
                     .HasMaxLength(255);
-        
+
         modelBuilder.Entity<User>()
-                    .Property(u => u.Active)
-                    .HasConversion<string>()
+                    .Property(u => u.Status)
                     .IsRequired()
-                    .HasDefaultValue(StatusUser.Active);
+                    .HasDefaultValue(StatusUser.Active)
+                    .HasConversion<string>();
         
         modelBuilder.Entity<User>()
                     .Property(u => u.CreatedAt)
                     .HasColumnType("timestamp")
-                    .HasDefaultValue("NOW()");
+                    .HasDefaultValueSql("NOW()");
         
         modelBuilder.Entity<User>()
                     .Property(u => u.UpdatedAt)
                     .HasColumnType("timestamp")
-                    .HasDefaultValue("NOW()");
+                    .HasDefaultValueSql("NOW()")
+                    .ValueGeneratedOnAddOrUpdate();
     }
 }

@@ -16,10 +16,7 @@ builder.ConfigureKeyVault();
 
 builder.Services.AddDbContext<UserDataContext>(option =>
 {
-    if (builder.Environment.IsDevelopment())
-        option.UseInMemoryDatabase("DataBase");
-    else
-        option.UseNpgsql(builder.Configuration.GetConnectionString("PostgresConnectionString"));
+    option.UseNpgsql(builder.Configuration.GetConnectionString("PostgresConnectionString"));
 });
 
 builder.Services.AddRepositories();

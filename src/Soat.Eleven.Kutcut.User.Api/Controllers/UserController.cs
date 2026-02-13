@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Soat.Eleven.Kutcut.Users.Application.DTOs.Inputs;
 using Soat.Eleven.Kutcut.Users.Application.Interfaces;
@@ -34,6 +35,7 @@ public class UserController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [Authorize]
     public async Task<IActionResult> GetUser([FromRoute] Guid id)
     {
         try
@@ -71,12 +73,12 @@ public class UserController : ControllerBase
         }
     }
 
-    [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateUser([FromRoute] Guid id, [FromBody] UpdateUserInput input)
+    [HttpPut]
+    [Authorize]
+    public async Task<IActionResult> UpdateUser([FromBody] UpdateUserInput input)
     {
         try
         {
-            input.Id = id;
             var result = await _userHandler.HandleAsync(input);
             return Ok(result);
         }
@@ -91,6 +93,7 @@ public class UserController : ControllerBase
     }
 
     [HttpPatch("{id}/deactivate")]
+    [Authorize]
     public async Task<IActionResult> DeactivateUser([FromRoute] Guid id)
     {
         try

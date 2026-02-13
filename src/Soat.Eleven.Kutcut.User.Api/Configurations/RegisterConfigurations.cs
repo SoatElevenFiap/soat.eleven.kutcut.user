@@ -18,6 +18,7 @@ public static class RegisterConfigurations
         services.AddTransient<IValidator<UpdateUserInput>, UpdateUserInputValidator>();
         services.AddTransient<IValidator<DeactiveUserInput>, DeactiveUserInputValidator>();
         services.AddTransient<IValidator<GetUserInput>, GetUserInputValidator>();
+        services.AddTransient<IValidator<LoginInput>, LoginInputValidator>();
     }
 
     public static void AddRepositories(this IServiceCollection services)
@@ -28,6 +29,7 @@ public static class RegisterConfigurations
     public static void AddHandlers(this IServiceCollection services)
     {
         services.AddScoped<IUserHandler, UserHandler>();
+        services.AddScoped<ILoginHandle, LoginHandle>();
     }
 
     public static void AddServices(this IServiceCollection services)

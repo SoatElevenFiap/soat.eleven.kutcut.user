@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Soat.Eleven.Kutcut.Users.Domain.Entities;
+using Soat.Eleven.Kutcut.Users.Domain.Enums;
 using Soat.Eleven.Kutcut.Users.Domain.Interfaces.Repositories;
 using Soat.Eleven.Kutcut.Users.Infra.Context;
 
@@ -31,6 +32,11 @@ public class UserRepository(UserDataContext context) : IUserRepository
     public async Task<User?> GetByIdAsync(Guid id)
     {
         return await context.Users.FindAsync(id);
+    }
+
+    public async Task<User?> GetLoginAsync(string email, string password)
+    {
+        return await context.Users.FirstOrDefaultAsync(u => u.Email == email && u.Password == password && u.Status == StatusUser.Active);
     }
 
     public async Task UpdateAsync(User user)
