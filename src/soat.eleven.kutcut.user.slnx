@@ -1,7 +1,0 @@
-<Solution>
-  <Project Path="Soat.Eleven.Kutcut.User.Api/Soat.Eleven.Kutcut.User.Api.csproj" Id="b76af716-a664-4505-b025-1ffb4c096ee7" />
-  <Project Path="Soat.Eleven.Kutcut.User.Application/Soat.Eleven.Kutcut.User.Application.csproj" Id="176019ea-417f-4078-8a92-f84f8bbc995b" />
-  <Project Path="Soat.Eleven.Kutcut.User.Domain/Soat.Eleven.Kutcut.User.Domain.csproj" Id="3d2d8566-670e-49a5-a9b1-b8fc02bc12a4" />
-  <Project Path="Soat.Eleven.Kutcut.User.Infra/Soat.Eleven.Kutcut.User.Infra.csproj" Id="bdd7d08a-6554-4c8c-a4ce-b5cba79829b6" />
-  <Project Path="Soat.Eleven.Kutcut.User.Tests/Soat.Eleven.Kutcut.User.Tests.csproj" Id="ac0bc6b2-1a67-4331-a948-84e93bf468fe" />
-</Solution>

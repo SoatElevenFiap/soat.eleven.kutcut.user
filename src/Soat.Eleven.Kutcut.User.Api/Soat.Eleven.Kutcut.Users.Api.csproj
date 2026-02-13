@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.4.0" />
+    <PackageReference Include="Azure.Identity" Version="1.17.1" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.2" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Soat.Eleven.Kutcut.User.Application\Soat.Eleven.Kutcut.Users.Application.csproj" />
+    <ProjectReference Include="..\Soat.Eleven.Kutcut.User.Domain\Soat.Eleven.Kutcut.Users.Domain.csproj" />
+    <ProjectReference Include="..\Soat.Eleven.Kutcut.User.Infra\Soat.Eleven.Kutcut.Users.Infra.csproj" />
+  </ItemGroup>
+
+</Project>
