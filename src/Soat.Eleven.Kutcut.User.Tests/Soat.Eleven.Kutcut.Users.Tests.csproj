@@ -5,17 +5,43 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+
+	  <!-- Configurações de Cobertura de Código -->
+	  <CollectCoverage>true</CollectCoverage>
+	  <CoverletOutputFormat>cobertura,opencover</CoverletOutputFormat>
+	  <CoverletOutput>./TestResults/coverage</CoverletOutput>
+	  <Threshold>80</Threshold>
+	  <ThresholdType>line,branch,method</ThresholdType>
+	  <ThresholdStat>minimum</ThresholdStat>
+	  <Include>[Soat.Eleven.FastFood.User.Application]*,[Soat.Eleven.FastFood.User.Domain]*,[Soat.Eleven.FastFood.User.Infra]*</Include>
+	  <Exclude>[*.Tests]*,[*]*Program,[*]*Startup,[*]*Configuration*,[*]*RegisterDependencyInjection*</Exclude>
+	  <ExcludeByFile>**/Migrations/**/*,**/Configuration/**/*,**/helm/**/*,**/charts/**/*,**/k8s/**/*,**/kubernetes/**/*,**/manifests/**/*,**/BDDTests/**</ExcludeByFile>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.4" />
+    <PackageReference Include="coverlet.msbuild" Version="6.0.4">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="Moq" Version="4.20.72" />
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
   </ItemGroup>
 
   <ItemGroup>
     <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Soat.Eleven.Kutcut.User.Application\Soat.Eleven.Kutcut.Users.Application.csproj" />
+    <ProjectReference Include="..\Soat.Eleven.Kutcut.User.Domain\Soat.Eleven.Kutcut.Users.Domain.csproj" />
+    <ProjectReference Include="..\Soat.Eleven.Kutcut.User.Infra\Soat.Eleven.Kutcut.Users.Infra.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="UnitTestes\Validators\" />
   </ItemGroup>
 
 </Project>

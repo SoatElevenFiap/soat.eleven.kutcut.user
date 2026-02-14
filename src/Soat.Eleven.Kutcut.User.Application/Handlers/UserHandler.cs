@@ -55,14 +55,7 @@ public class UserHandler : IUserHandler
 
         await _userRepository.CreateAsync(user);
 
-        return new CreateUserOutput
-        {
-            Id = user.Id,
-            Name = user.Name,
-            Email = user.Email,
-            Active = user.Status,
-            CreatedAt = user.CreatedAt
-        };
+        return (CreateUserOutput)user;
     }
 
     public async Task<UpdateUserOutput> HandleAsync(UpdateUserInput input)
@@ -91,14 +84,7 @@ public class UserHandler : IUserHandler
 
         await _userRepository.UpdateAsync(user);
 
-        return new UpdateUserOutput
-        {
-            Id = user.Id,
-            Name = user.Name,
-            Email = user.Email,
-            Active = user.Status,
-            UpdatedAt = user.UpdatedAt
-        };
+        return (UpdateUserOutput)user;
     }
 
     public async Task<DeactiveUserOutput> HandleAsync(DeactiveUserInput input)
@@ -153,14 +139,6 @@ public class UserHandler : IUserHandler
             throw new Exception("Usuário não encontrado.");
         }
 
-        return new GetUserOutput
-        {
-            Id = user.Id,
-            Name = user.Name,
-            Email = user.Email,
-            Active = user.Status,
-            CreatedAt = user.CreatedAt,
-            UpdatedAt = user.UpdatedAt
-        };
+        return (GetUserOutput)user;
     }
 }
