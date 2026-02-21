@@ -19,6 +19,7 @@ public class UserHandlerTests
     private readonly Mock<IValidator<GetUserInput>> _getUserValidatorMock;
     private readonly Mock<IJwtTokenService> _jwtTokenServiceMock;
     private readonly Mock<IPasswordService> _passwordServiceMock;
+    private readonly Mock<ICacheService> _cacheServiceMock;
     private readonly UserHandler _userHandler;
 
     public UserHandlerTests()
@@ -30,6 +31,7 @@ public class UserHandlerTests
         _getUserValidatorMock = new Mock<IValidator<GetUserInput>>();
         _jwtTokenServiceMock = new Mock<IJwtTokenService>();
         _passwordServiceMock = new Mock<IPasswordService>();
+        _cacheServiceMock = new Mock<ICacheService>();
 
         _userHandler = new UserHandler(
             _userRepositoryMock.Object,
@@ -38,7 +40,8 @@ public class UserHandlerTests
             _deactiveUserValidatorMock.Object,
             _getUserValidatorMock.Object,
             _jwtTokenServiceMock.Object,
-            _passwordServiceMock.Object
+            _passwordServiceMock.Object,
+            _cacheServiceMock.Object
         );
     }
 
@@ -58,12 +61,20 @@ public class UserHandlerTests
             .Setup(v => v.ValidateAsync(input, default))
             .ReturnsAsync(new ValidationResult());
 
+        _userRepositoryMock
+            .Setup(r => r.GetByEmailAsync(input.Email))
+            .ReturnsAsync((User?)null);
+
         _passwordServiceMock
             .Setup(p => p.TransformToHash(input.Password))
             .Returns(passwordHash);
 
         _userRepositoryMock
             .Setup(r => r.CreateAsync(It.IsAny<User>()))
+            .Returns(Task.CompletedTask);
+
+        _cacheServiceMock
+            .Setup(c => c.SetAsync(It.IsAny<string>(), It.IsAny<User>()))
             .Returns(Task.CompletedTask);
 
         var result = await _userHandler.HandleAsync(input);
@@ -73,6 +84,7 @@ public class UserHandlerTests
         Assert.Equal(input.Email, result.Email);
         _userRepositoryMock.Verify(r => r.CreateAsync(It.IsAny<User>()), Times.Once);
         _passwordServiceMock.Verify(p => p.TransformToHash(input.Password), Times.Once);
+        _cacheServiceMock.Verify(c => c.SetAsync(It.IsAny<string>(), It.IsAny<User>()), Times.Once);
     }
 
     [Fact]
@@ -133,9 +145,17 @@ public class UserHandlerTests
             .Setup(v => v.ValidateAsync(input, default))
             .ReturnsAsync(new ValidationResult());
 
+        _cacheServiceMock
+            .Setup(c => c.GetAsync<User>(It.IsAny<string>()))
+            .ReturnsAsync((User?)null);
+
         _userRepositoryMock
             .Setup(r => r.GetByIdAsync(userId))
             .ReturnsAsync(existingUser);
+
+        _userRepositoryMock
+            .Setup(r => r.GetByEmailAsync(input.Email))
+            .ReturnsAsync((User?)null);
 
         _passwordServiceMock
             .Setup(p => p.TransformToHash(input.Password))
@@ -145,12 +165,17 @@ public class UserHandlerTests
             .Setup(r => r.UpdateAsync(It.IsAny<User>()))
             .Returns(Task.CompletedTask);
 
+        _cacheServiceMock
+            .Setup(c => c.SetAsync(It.IsAny<string>(), It.IsAny<User>()))
+            .Returns(Task.CompletedTask);
+
         var result = await _userHandler.HandleAsync(input);
 
         Assert.NotNull(result);
         Assert.Equal(input.Name, result.Name);
         Assert.Equal(input.Email, result.Email);
         _userRepositoryMock.Verify(r => r.UpdateAsync(It.IsAny<User>()), Times.Once);
+        _cacheServiceMock.Verify(c => c.SetAsync(It.IsAny<string>(), It.IsAny<User>()), Times.Exactly(2));
     }
 
     [Fact]
@@ -172,6 +197,10 @@ public class UserHandlerTests
         _updateUserValidatorMock
             .Setup(v => v.ValidateAsync(input, default))
             .ReturnsAsync(new ValidationResult());
+
+        _cacheServiceMock
+            .Setup(c => c.GetAsync<User>(It.IsAny<string>()))
+            .ReturnsAsync((User?)null);
 
         _userRepositoryMock
             .Setup(r => r.GetByIdAsync(userId))
@@ -238,12 +267,20 @@ public class UserHandlerTests
             .Setup(v => v.ValidateAsync(input, default))
             .ReturnsAsync(new ValidationResult());
 
+        _cacheServiceMock
+            .Setup(c => c.GetAsync<User>(It.IsAny<string>()))
+            .ReturnsAsync((User?)null);
+
         _userRepositoryMock
             .Setup(r => r.GetByIdAsync(userId))
             .ReturnsAsync(existingUser);
 
         _userRepositoryMock
             .Setup(r => r.UpdateAsync(It.IsAny<User>()))
+            .Returns(Task.CompletedTask);
+
+        _cacheServiceMock
+            .Setup(c => c.SetAsync(It.IsAny<string>(), It.IsAny<User>()))
             .Returns(Task.CompletedTask);
 
         var result = await _userHandler.HandleAsync(input);
@@ -253,6 +290,7 @@ public class UserHandlerTests
         Assert.Equal(StatusUser.Inactive, result.Active);
         Assert.Contains("desativado com sucesso", result.Message);
         _userRepositoryMock.Verify(r => r.UpdateAsync(It.IsAny<User>()), Times.Once);
+        _cacheServiceMock.Verify(c => c.SetAsync(It.IsAny<string>(), It.IsAny<User>()), Times.Once);
     }
 
     [Fact]
@@ -267,6 +305,10 @@ public class UserHandlerTests
         _deactiveUserValidatorMock
             .Setup(v => v.ValidateAsync(input, default))
             .ReturnsAsync(new ValidationResult());
+
+        _cacheServiceMock
+            .Setup(c => c.GetAsync<User>(It.IsAny<string>()))
+            .ReturnsAsync((User?)null);
 
         _userRepositoryMock
             .Setup(r => r.GetByIdAsync(userId))
@@ -325,9 +367,17 @@ public class UserHandlerTests
             .Setup(v => v.ValidateAsync(input, default))
             .ReturnsAsync(new ValidationResult());
 
+        _cacheServiceMock
+            .Setup(c => c.GetAsync<User>(It.IsAny<string>()))
+            .ReturnsAsync((User?)null);
+
         _userRepositoryMock
             .Setup(r => r.GetByIdAsync(userId))
             .ReturnsAsync(existingUser);
+
+        _cacheServiceMock
+            .Setup(c => c.SetAsync(It.IsAny<string>(), It.IsAny<User>()))
+            .Returns(Task.CompletedTask);
 
         var result = await _userHandler.HandleAsync(input);
 
@@ -336,6 +386,7 @@ public class UserHandlerTests
         Assert.Equal(existingUser.Name, result.Name);
         Assert.Equal(existingUser.Email, result.Email);
         _userRepositoryMock.Verify(r => r.GetByIdAsync(userId), Times.Once);
+        _cacheServiceMock.Verify(c => c.SetAsync(It.IsAny<string>(), It.IsAny<User>()), Times.Once);
     }
 
     [Fact]
@@ -389,6 +440,10 @@ public class UserHandlerTests
         _getUserValidatorMock
             .Setup(v => v.ValidateAsync(input, default))
             .ReturnsAsync(new ValidationResult());
+
+        _cacheServiceMock
+            .Setup(c => c.GetAsync<User>(It.IsAny<string>()))
+            .ReturnsAsync((User?)null);
 
         _userRepositoryMock
             .Setup(r => r.GetByIdAsync(userId))

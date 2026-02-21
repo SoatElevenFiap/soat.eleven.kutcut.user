@@ -36,5 +36,6 @@ public static class RegisterConfigurations
     {
         services.AddTransient<IPasswordService, PasswordService>();
         services.AddTransient<IJwtTokenService, JwtTokenService>();
+        services.AddSingleton<ICacheService, CacheService>();
     }
 }
