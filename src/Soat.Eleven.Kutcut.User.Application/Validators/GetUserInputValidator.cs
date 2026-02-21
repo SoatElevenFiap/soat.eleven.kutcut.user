@@ -8,7 +8,7 @@ public class GetUserInputValidator : AbstractValidator<GetUserInput>
     public GetUserInputValidator()
     {
         RuleFor(x => x)
-            .Must(input => input.Id != Guid.Empty || !string.IsNullOrEmpty(input.Email))
+            .Must(input => input.Id != Guid.Empty || !string.IsNullOrWhiteSpace(input.Email))
             .WithMessage("Informe o ID ou Email do usuário.");
     }
 }

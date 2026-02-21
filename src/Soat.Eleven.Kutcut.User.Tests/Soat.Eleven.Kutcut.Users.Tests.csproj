@@ -13,9 +13,9 @@
 	  <Threshold>80</Threshold>
 	  <ThresholdType>line,branch,method</ThresholdType>
 	  <ThresholdStat>minimum</ThresholdStat>
-	  <Include>[Soat.Eleven.FastFood.User.Application]*,[Soat.Eleven.FastFood.User.Domain]*,[Soat.Eleven.FastFood.User.Infra]*</Include>
+	  <Include>[Soat.Eleven.Kutcut.Users.Application]*,[Soat.Eleven.Kutcut.Users.Domain]*,[Soat.Eleven.Kutcut.Users.Infra]*</Include>
 	  <Exclude>[*.Tests]*,[*]*Program,[*]*Startup,[*]*Configuration*,[*]*RegisterDependencyInjection*</Exclude>
-	  <ExcludeByFile>**/Migrations/**/*,**/Configuration/**/*,**/helm/**/*,**/charts/**/*,**/k8s/**/*,**/kubernetes/**/*,**/manifests/**/*,**/BDDTests/**</ExcludeByFile>
+	  <ExcludeByFile>**/Migrations/**/*,**/Repositories/**/*,**/Context/**/*,**/Configuration/**/*,**/helm/**/*,**/charts/**/*,**/k8s/**/*,**/kubernetes/**/*,**/manifests/**/*,**/BDDTests/**</ExcludeByFile>
   </PropertyGroup>
 
   <ItemGroup>
