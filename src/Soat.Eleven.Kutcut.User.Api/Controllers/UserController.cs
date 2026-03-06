@@ -35,7 +35,6 @@ public class UserController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    [Authorize]
     public async Task<IActionResult> GetUser([FromRoute] Guid id)
     {
         try
