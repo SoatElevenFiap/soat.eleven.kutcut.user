@@ -10,6 +10,7 @@ Microserviço responsável por gerenciar e autenticar usuários do sistema Kutcu
 - [Estrutura do Projeto](#-estrutura-do-projeto)
 - [Pré-requisitos](#-pré-requisitos)
 - [Configuração e Execução](#-configuração-e-execução)
+- [Containerização e Deploy](#-containerização-e-deploy)
 - [Endpoints da API](#-endpoints-da-api)
 - [Testes](#-testes)
 - [Variáveis de Configuração](#-variáveis-de-configuração)
@@ -28,7 +29,8 @@ Este microserviço é responsável por todo o gerenciamento de usuários e auten
 - **Azure Key Vault** - Gerenciamento de secrets
 - **FluentValidation** - Validação de dados
 - **Swagger/OpenAPI** - Documentação da API
-- **Docker & Docker Compose** - Containerização
+- **Dockerfile, Docker & Docker Compose** - Containerização
+- **Helm** - Empacotamento e deploy no Kubernetes
 - **XUnit** - Framework de testes unitários
 - **Moq** - Framework de mock para testes
 - **Coverlet** - Cobertura de código
@@ -151,6 +153,25 @@ A aplicação estará disponível em:
 - **HTTP**: http://localhost:5000
 - **HTTPS**: https://localhost:5001
 - **Swagger**: http://localhost:5000/swagger
+
+## 📦 Containerização e Deploy
+
+Este projeto utiliza:
+- **Dockerfile** para build e execução da API em container
+- **Docker Compose** para subir dependências locais (PostgreSQL e Redis)
+- **Helm** para deploy no Kubernetes (chart em `helm/`)
+
+### Build da imagem com Dockerfile
+
+```bash
+docker build -f Dockerfile -t kutcut-user-api:latest .
+```
+
+### Exemplo de deploy com Helm
+
+```bash
+helm upgrade --install kutcut-user ./helm -f ./helm/values.yaml
+```
 
 ## 🔌 Endpoints da API
 
