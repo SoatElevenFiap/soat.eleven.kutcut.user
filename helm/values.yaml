@@ -1,0 +1,49 @@
+﻿# ============================================================
+# KutCut API — Helm Values
+# Sensitive values (secret.*) must be supplied at deploy time:
+#   helm upgrade --install kutcut-api ./helm \
+#     --set secret.postgresConnectionString="Host=..." \
+#     --set secret.jwtSecretKey="..."
+# ============================================================
+
+replicaCount: 1
+
+image:
+  repository: <ACR_NAME>.azurecr.io/kutcut-api
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "500m"
+  host: "kutcut.example.com"
+
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "100m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 70
+
+# Non-sensitive configuration (ConfigMap)
+config:
+  aspnetcoreEnvironment: "Production"
+
+# Sensitive configuration (Secret) — leave empty, set at deploy time
+secret:
+  postgresConnectionString: ""
+  jwtSecretKey: ""

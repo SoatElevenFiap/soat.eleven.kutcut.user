@@ -4,15 +4,15 @@ Microserviço responsável por gerenciar e autenticar usuários do sistema Kutcu
 
 ## 📋 Índice
 
-- [Sobre o Projeto](#sobre-o-projeto)
-- [Tecnologias Utilizadas](#tecnologias-utilizadas)
-- [Arquitetura](#arquitetura)
-- [Estrutura do Projeto](#estrutura-do-projeto)
-- [Pré-requisitos](#pré-requisitos)
-- [Configuração e Execução](#configuração-e-execução)
-- [Endpoints da API](#endpoints-da-api)
-- [Testes](#testes)
-- [Variáveis de Configuração](#variáveis-de-configuração)
+- [Sobre o Projeto](#-sobre-o-projeto)
+- [Tecnologias Utilizadas](#-tecnologias-utilizadas)
+- [Arquitetura](#-arquitetura)
+- [Estrutura do Projeto](#-estrutura-do-projeto)
+- [Pré-requisitos](#-pré-requisitos)
+- [Configuração e Execução](#-configuração-e-execução)
+- [Endpoints da API](#-endpoints-da-api)
+- [Testes](#-testes)
+- [Variáveis de Configuração](#-variáveis-de-configuração)
 
 ## 🎯 Sobre o Projeto
 
