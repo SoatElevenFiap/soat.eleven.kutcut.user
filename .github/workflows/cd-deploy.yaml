@@ -100,6 +100,7 @@ jobs:
             --set config.postgres.db="kutcut" \
             --set secret.postgresUser="${{ secrets.POSTGRES_USER }}" \
             --set secret.postgresPassword="${{ secrets.POSTGRES_PASSWORD }}" \
+            --set keyVault.enabled=true \
             --show-only kutcut-user/templates/serviceaccount.yaml \
             --show-only kutcut-user/templates/secretproviderclass.yaml \
             --show-only kutcut-user/templates/configmap.yaml \
