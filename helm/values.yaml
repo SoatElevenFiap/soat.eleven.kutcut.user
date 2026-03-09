@@ -21,6 +21,7 @@ migrator:
   enabled: true
   repository: acrkutcutpostech.azurecr.io/kutcut/user-migrator
   tag: latest
+  pullPolicy: Always
 
 service:
   type: ClusterIP

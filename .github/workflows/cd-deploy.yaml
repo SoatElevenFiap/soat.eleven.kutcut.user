@@ -44,8 +44,7 @@ jobs:
           docker build --target final -t $REGISTRY/$APP_IMAGE_NAME:${{ github.sha }} -t $REGISTRY/$APP_IMAGE_NAME:latest .
           
           # Build da imagem do Migrator (estágio 'migrator')
-          docker build --target migrator -t $REGISTRY/$APP_IMAGE_NAME-migrator:${{ github.sha }} -t $REGISTRY/$APP_IMAGE_NAME-migrator:latest .
-          
+          docker build --target migrator -t $REGISTRY/$APP_IMAGE_NAME-migrator:${{ github.sha }} -t $REGISTRY/$APP_IMAGE_NAME-migrator:latest .          
           docker push $REGISTRY/$APP_IMAGE_NAME:${{ github.sha }}
           docker push $REGISTRY/$APP_IMAGE_NAME:latest
           docker push $REGISTRY/$APP_IMAGE_NAME-migrator:${{ github.sha }}
@@ -88,24 +87,20 @@ jobs:
           kubectl delete jobs -l app=kutcut-migrations -n $NAMESPACE --ignore-not-found=true
           
           echo "🚀 Renderizando e aplicando Job de Migração..."
-          helm template migrator-job $CHART_PATH \
-            --namespace $NAMESPACE \
-            --set image.migratorRepository=$REGISTRY/$APP_IMAGE_NAME \
-            --set image.tag=${{ github.sha }} \
+          helm template migrator-job $CHART_PATH --namespace $NAMESPACE \
+            --set migrator.repository=$REGISTRY/$APP_IMAGE_NAME-migrator \
+            --set migrator.tag="${{ github.sha }}" \
             --set config.postgres.host="psql-kutcut-postech.postgres.database.azure.com" \
             --set config.postgres.db="kutcut" \
             --set secret.postgresUser="${{ secrets.POSTGRES_USER }}" \
             --set secret.postgresPassword="${{ secrets.POSTGRES_PASSWORD }}" \
-            --set secret.postgresConnectionString="Host=psql-kutcut-postech.postgres.database.azure.com;Database=kutcut;Username=${{ secrets.POSTGRES_USER }};Password=${{ secrets.POSTGRES_PASSWORD }};Port=5432" \
-            --show-only templates/migrator-job.yaml \
-            --show-only templates/configmap.yaml \
-            --show-only templates/secretproviderclass.yaml \
             --show-only templates/serviceaccount.yaml \
-            --show-only templates/configmap.yaml | kubectl apply -f -
+            --show-only templates/secretproviderclass.yaml \
+            --show-only templates/configmap.yaml \
+            --show-only templates/migrator-job.yaml | kubectl apply -f -
 
           echo "⏳ Aguardando migração finalizar..."
-          kubectl wait --for=condition=complete job -l app=migrator-job-migrator -n kutcut.
-
+          kubectl wait --for=condition=complete job -l app=migrator-job-migrator -n $NAMESPACE --timeout=120s
       # 8. Deploy da Aplicação (Com rollback automático)
       - name: Deploy Application via Helm
         run: |
