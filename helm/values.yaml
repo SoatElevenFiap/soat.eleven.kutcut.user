@@ -19,8 +19,8 @@ podAnnotations: {}
 # Configuração Migrator
 migrator:
   enabled: true
-  repository: acrkutcutpostech.azurecr.io/kutcut-user
-  tag: latest-migrator
+  repository: acrkutcutpostech.azurecr.io/kutcut/user-migrator
+  tag: latest
 
 service:
   type: ClusterIP
