@@ -9,7 +9,7 @@ on:
 env:
   REGISTRY: acrkutcutpostech.azurecr.io
   APP_IMAGE_NAME: kutcut/user
-  CHART_PATH: ./helm/templates
+  CHART_PATH: ./helm
   RELEASE_NAME: kutcut-user
   AKS_RESOURCE_GROUP: rg-kutcut-postech
   AKS_CLUSTER_NAME: aks-kutcut-postech
@@ -98,8 +98,11 @@ jobs:
             --set secret.postgresPassword="${{ secrets.POSTGRES_PASSWORD }}" \
             --set secret.postgresConnectionString="Host=psql-kutcut-postech.postgres.database.azure.com;Database=kutcut;Username=${{ secrets.POSTGRES_USER }};Password=${{ secrets.POSTGRES_PASSWORD }};Port=5432" \
             --show-only templates/migrator-job.yaml \
-            --show-only templates/config-map.yaml \
-            --show-only templates/secret.yaml | kubectl apply -f -
+            --show-only templates/configmap.yaml \
+            --show-only templates/secretproviderclass.yaml \
+            --show-only templates/serviceaccount.yaml.yaml \
+            --show-only templates/configmap.yaml \
+             kubectl apply -f -
 
           echo "⏳ Aguardando migração finalizar..."
           kubectl wait --for=condition=complete job -l app=migrator-job-migrator -n kutcut.
