@@ -101,7 +101,7 @@ jobs:
             --show-only templates/configmap.yaml \
             --show-only templates/secretproviderclass.yaml \
             --show-only templates/serviceaccount.yaml.yaml \
-            --show-only templates/configmap.yaml \
+            --show-only templates/configmap.yaml |
              kubectl apply -f -
 
           echo "⏳ Aguardando migração finalizar..."
