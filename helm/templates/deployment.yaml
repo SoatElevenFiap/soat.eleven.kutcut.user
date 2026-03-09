@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ .Release.Name }}
+  namespace: {{ .Values.namespace.name | default "kutcut" }}
   labels:
     app: {{ .Release.Name }}
 spec:
@@ -13,38 +14,84 @@ spec:
       app: {{ .Release.Name }}
   template:
     metadata:
+      {{- if .Values.podAnnotations }}
+      annotations:
+        {{- toYaml .Values.podAnnotations | nindent 8 }}
+      {{- end }}
       labels:
         app: {{ .Release.Name }}
+        azure.workload.identity/use: "true"
     spec:
+      {{- if .Values.imagePullSecrets }}
       imagePullSecrets:
-        - name: acr-secret
+        {{- toYaml .Values.imagePullSecrets | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ .Release.Name }}
       containers:
-        - name: {{ .Release.Name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default "latest" }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
               containerPort: 8080
               protocol: TCP
-          envFrom:
-            - configMapRef:
-                name: {{ .Release.Name }}-config
-            - secretRef:
-                name: {{ .Release.Name }}-secret
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: {{ .Values.config.aspnetcoreEnvironment | quote }}
+            - name: ConnectionStrings__PostgresConnectionString
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secret
+                  key: ConnectionStrings__PostgresConnectionString
+            - name: JwtSettings__SecretKey
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secret
+                  key: JwtSettings__SecretKey
+            - name: SaltKey
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secret
+                  key: SaltKey
+            - name: RabbitMQ__Host
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Release.Name }}-config
+                  key: RABBITMQ_HOST
+            - name: RabbitMQ__Username
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secret
+                  key: RabbitMQ__Username # Nome da chave que está no seu Key Vault/Secret
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secret
+                  key: RabbitMQ__Password
+          {{- if .Values.livenessProbe }}
           livenessProbe:
-            httpGet:
-              path: /health
-              port: 8080
-            initialDelaySeconds: 30
-            periodSeconds: 15
-            failureThreshold: 3
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          {{- end }}
+          {{- if .Values.readinessProbe }}
           readinessProbe:
-            httpGet:
-              path: /health
-              port: 8080
-            initialDelaySeconds: 15
-            periodSeconds: 10
-            failureThreshold: 3
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          {{- end }}
+          {{- if .Values.resources }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-      terminationGracePeriodSeconds: 30
+          {{- end }}
+          volumeMounts:
+            {{- if .Values.keyVault.enabled }}
+            - name: secrets-store-inline
+              mountPath: "/mnt/secrets-store"
+              readOnly: true
+            {{- end }}
+      volumes:
+        {{- if .Values.keyVault.enabled }}
+        - name: secrets-store-inline
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: {{ .Release.Name }}-kv
+        {{- end }}

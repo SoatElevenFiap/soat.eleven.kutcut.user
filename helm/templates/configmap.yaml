@@ -2,7 +2,13 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {{ .Release.Name }}-config
+  namespace: {{ .Values.namespace.name | default "kutcut" }}
   labels:
     app: {{ .Release.Name }}
 data:
   ASPNETCORE_ENVIRONMENT: {{ .Values.config.aspnetcoreEnvironment | quote }}
+  POSTGRES_HOST: {{ .Values.config.postgres.host | quote }}
+  POSTGRES_PORT: {{ .Values.config.postgres.port | quote }}
+  POSTGRES_DB: {{ .Values.config.postgres.db | quote }}
+  RABBITMQ_HOST: {{ .Values.config.rabbitmq.host | default "rabbitmq" | quote }}
+  RABBITMQ_PORT: "5672"

@@ -1,0 +1,78 @@
+{{- if .Values.migrator.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-migrator-{{ now | date "20060102-150405" }}
+  namespace: {{ .Values.namespace.name | default "kutcut" }}
+  labels:
+    app: {{ .Release.Name }}-migrator
+spec:
+  ttlSecondsAfterFinished: 3600
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-migrator
+        azure.workload.identity/use: "true"
+    spec:
+      serviceAccountName: {{ .Release.Name }}
+      restartPolicy: OnFailure
+      containers:
+        - name: migrator
+          image: "{{ .Values.migrator.repository }}:{{ .Values.migrator.tag }}"
+          imagePullPolicy: Always
+          # Usar 'command' sobrescreve o ENTRYPOINT do Dockerfile
+          command:
+            - sh
+            - -c
+            - |
+              echo "=== Iniciando Migração via Shell ==="
+              # Entramos na pasta da API onde o build foi realizado no Docker
+              cd /src/src/Soat.Eleven.Kutcut.User.Api
+
+              dotnet ef database update \
+                --connection "Host=$(POSTGRES_HOST);Port=$(POSTGRES_PORT);Database=$(POSTGRES_DB);Username=$(POSTGRES_USER);Password=$(POSTGRES_PASSWORD);SslMode=Require;TrustServerCertificate=true" \
+                --project ../Soat.Eleven.Kutcut.User.Infra/Soat.Eleven.Kutcut.Users.Infra.csproj \
+                --startup-project Soat.Eleven.Kutcut.Users.Api.csproj \
+                --verbose
+          env:
+            - name: POSTGRES_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Release.Name }}-config
+                  key: POSTGRES_HOST
+            - name: POSTGRES_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Release.Name }}-config
+                  key: POSTGRES_PORT
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Release.Name }}-config
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secret
+                  key: postgres-user
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-secret
+                  key: postgres-password
+          volumeMounts:
+            {{- if .Values.keyVault.enabled }}
+            - name: secrets-store-inline
+              mountPath: "/mnt/secrets-store"
+              readOnly: true
+            {{- end }}
+      volumes:
+        {{- if .Values.keyVault.enabled }}
+        - name: secrets-store-inline
+          csi:
+            driver: secrets-store.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: {{ .Release.Name }}-kv
+        {{- end }}
+{{- end }}

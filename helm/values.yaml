@@ -1,17 +1,26 @@
 ﻿# ============================================================
-# KutCut API — Helm Values
-# Sensitive values (secret.*) must be supplied at deploy time:
-#   helm upgrade --install kutcut-api ./helm \
-#     --set secret.postgresConnectionString="Host=..." \
-#     --set secret.jwtSecretKey="..."
+# KutCut User API — Helm Values
 # ============================================================
+
+namespace:
+  name: kutcut
+  create: false
 
 replicaCount: 1
 
 image:
-  repository: <ACR_NAME>.azurecr.io/kutcut-api
-  tag: "latest"
+  repository: acrkutcutpostech.azurecr.io/kutcut-user
+  tag: latest
   pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+podAnnotations: {}
+
+# Configuração Migrator
+migrator:
+  enabled: true
+  repository: acrkutcutpostech.azurecr.io/kutcut-user
+  tag: latest-migrator
 
 service:
   type: ClusterIP
@@ -22,16 +31,16 @@ ingress:
   enabled: true
   className: "nginx"
   annotations:
-    nginx.ingress.kubernetes.io/proxy-body-size: "500m"
-  host: "kutcut.example.com"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+  host: "kutcut.user.com" # Ajustar conforme necessidade
 
 resources:
-  requests:
-    memory: "256Mi"
-    cpu: "100m"
   limits:
-    memory: "512Mi"
-    cpu: "500m"
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
 
 autoscaling:
   enabled: false
@@ -39,11 +48,37 @@ autoscaling:
   maxReplicas: 5
   targetCPUUtilizationPercentage: 70
 
-# Non-sensitive configuration (ConfigMap)
+# Integração com Key Vault (Workload Identity)
+keyVault:
+  enabled: false
+  name: ""
+  tenantId: ""
+  clientId: "" # Managed Identity Client ID
+
+# Configurações de Ambiente (ConfigMap)
 config:
   aspnetcoreEnvironment: "Production"
+  postgres:
+    host: "psql-kutcut-postech.postgres.database.azure.com"
+    port: "5432"
+    db: "kutcut_users"
+  rabbitmq:
+    host: "rabbitmq.kutcut.svc.cluster.local"
+    port: "5672"
+livenessProbe:
+  tcpSocket:
+    port: 8080
+  initialDelaySeconds: 30
+  periodSeconds: 10
 
-# Sensitive configuration (Secret) — leave empty, set at deploy time
-secret:
-  postgresConnectionString: ""
-  jwtSecretKey: ""
+readinessProbe:
+  tcpSocket:
+    port: 8080
+  initialDelaySeconds: 15
+  periodSeconds: 5
+
+keyVault:
+  enabled: false
+  name: ""
+  tenantId: ""
+  clientId: ""
