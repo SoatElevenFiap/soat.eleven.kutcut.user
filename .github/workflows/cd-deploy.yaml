@@ -37,14 +37,19 @@ jobs:
       - name: Azure Container Registry Login
         run: az acr login --name acrkutcutpostech
 
-      # 3. Build e Push da imagem (Versionamento SHA + Latest)
-      - name: Build and push Docker image
-        env:
-          IMAGE_TAG: ${{ github.sha }}
+      # 3. Build e Push das imagens (API e Migrator)
+      - name: Build and push Docker images
         run: |
-          docker build -t $REGISTRY/$APP_IMAGE_NAME:$IMAGE_TAG -t $REGISTRY/$APP_IMAGE_NAME:latest .
-          docker push $REGISTRY/$APP_IMAGE_NAME:$IMAGE_TAG
+          # Build da imagem da API (estágio 'final')
+          docker build --target final -t $REGISTRY/$APP_IMAGE_NAME:${{ github.sha }} -t $REGISTRY/$APP_IMAGE_NAME:latest .
+          
+          # Build da imagem do Migrator (estágio 'migrator')
+          docker build --target migrator -t $REGISTRY/$APP_IMAGE_NAME-migrator:${{ github.sha }} -t $REGISTRY/$APP_IMAGE_NAME-migrator:latest .
+          
+          docker push $REGISTRY/$APP_IMAGE_NAME:${{ github.sha }}
           docker push $REGISTRY/$APP_IMAGE_NAME:latest
+          docker push $REGISTRY/$APP_IMAGE_NAME-migrator:${{ github.sha }}
+          docker push $REGISTRY/$APP_IMAGE_NAME-migrator:latest
 
       # 4. Conectar no AKS
       - name: Get AKS credentials
@@ -92,9 +97,6 @@ jobs:
             --set secret.postgresUser="${{ secrets.POSTGRES_USER }}" \
             --set secret.postgresPassword="${{ secrets.POSTGRES_PASSWORD }}" \
             --set secret.postgresConnectionString="Host=psql-kutcut-postech.postgres.database.azure.com;Database=kutcut;Username=${{ secrets.POSTGRES_USER }};Password=${{ secrets.POSTGRES_PASSWORD }};Port=5432" \
-            --show-only ./helm/templates/migrator-job.yaml \
-            --show-only ./helm/templates/configmap.yaml \
-            --show-only ./helm/templates/secret.yaml | kubectl apply -f -
           
           echo "⏳ Aguardando migração finalizar..."
           kubectl wait --for=condition=complete job -l app=kutcut-migrations -n $NAMESPACE --timeout=300s
