@@ -101,6 +101,9 @@ jobs:
             --set secret.postgresUser="${{ secrets.POSTGRES_USER }}" \
             --set secret.postgresPassword="${{ secrets.POSTGRES_PASSWORD }}" \
             --set keyVault.enabled=true \
+            --set keyVault.name="kv-kutcut-0655d655" \
+            --set keyVault.clientId="${{ secrets.AZURE_CLIENT_ID_KAUAN }}" \
+            --set keyVault.tenantId="${{ secrets.AZURE_TENANT_ID_KAUAN }}" \
             --show-only templates/serviceaccount.yaml \
             --show-only templates/secretproviderclass.yaml \
             --show-only templates/configmap.yaml \
