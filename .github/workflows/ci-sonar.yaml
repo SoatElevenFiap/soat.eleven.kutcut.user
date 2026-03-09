@@ -1,0 +1,121 @@
+name: CI - Build, Test and SonarCloud Analysis
+
+on:
+  pull_request:
+    branches:
+      - main
+      - testeDeploy
+  workflow_dispatch:
+
+jobs:
+  build-and-analyze:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      # 1. Checkout do código com histórico completo para o SonarCloud
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # 2. Setup .NET
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      # 3. Setup Java (necessário para o SonarCloud Scanner)
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # 4. Cache SonarCloud packages
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v4
+        with:
+          path: ~/sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      # 5. Cache SonarCloud scanner
+      - name: Cache SonarCloud scanner
+        id: cache-sonar-scanner
+        uses: actions/cache@v4
+        with:
+          path: ./.sonar/scanner
+          key: ${{ runner.os }}-sonar-scanner
+          restore-keys: ${{ runner.os }}-sonar-scanner
+
+      # 6. Install SonarCloud scanner
+      - name: Install SonarCloud scanner
+        if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ./.sonar/scanner
+          dotnet tool update dotnet-sonarscanner --tool-path ./.sonar/scanner
+
+      # 7. Restore dependencies
+      - name: Restore dependencies
+        run: dotnet restore soat.eleven.kutcut.core/soat.eleven.kutcut.core.sln
+
+      # 8. Begin SonarCloud analysis
+      - name: Begin SonarCloud analysis
+        run: |
+          ./.sonar/scanner/dotnet-sonarscanner begin \
+            /k:"SoatElevenFiap_soat.eleven.kutcut.core" \
+            /o:"soatelevenfiap" \
+            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
+            /d:sonar.host.url="https://sonarcloud.io" \
+            /d:sonar.cs.opencover.reportsPaths="**/coverage.opencover.xml" \
+            /d:sonar.exclusions="**/Migrations/**,**/workflows/**,**/helm/**,**/Dockerfile,**/*.yaml" \
+            /d:sonar.qualitygate.wait=true
+
+      # 9. Build project
+      - name: Build project
+        run: dotnet build soat.eleven.kutcut.core/soat.eleven.kutcut.core.sln --configuration Release --no-restore
+
+      # 10. Run tests with coverage
+      - name: Run tests
+        run: |
+          dotnet test soat.eleven.kutcut.core/soat.eleven.kutcut.core.sln \
+            --no-build \
+            --configuration Release \
+            --verbosity normal \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./coverage \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+
+      # 11. End SonarCloud analysis (falha se Quality Gate não passar)
+      - name: End SonarCloud analysis
+        id: sonar
+        run: ./.sonar/scanner/dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+
+      # 12. Comentar no PR se falhar
+      - name: Comment on PR if Quality Gate failed
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '❌ **Quality Gate Failed!**\n\nA cobertura de código não atingiu o mínimo de **80%**.\n\nPor favor, adicione mais testes antes de fazer o merge.\n\n[Ver detalhes no SonarCloud](https://sonarcloud.io/dashboard?id=SoatElevenFiap_soat.eleven.kutcut.core)'
+            })
+
+      # 13. Comentar no PR se passar
+      - name: Comment on PR if Quality Gate passed
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '✅ **Quality Gate Passed!**\n\nA cobertura de código atingiu o mínimo de **80%**.\n\nO PR está pronto para merge.\n\n[Ver detalhes no SonarCloud](https://sonarcloud.io/dashboard?id=SoatElevenFiap_soat.eleven.kutcut.core)'
+            })

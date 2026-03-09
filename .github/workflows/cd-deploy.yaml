@@ -1,0 +1,115 @@
+name: CD - Deploy FastFood to AKS
+
+on:
+  push:
+    branches:
+      - cd/teste
+  workflow_dispatch:
+
+env:
+  REGISTRY: acrkutcutpostech.azurecr.io
+  APP_IMAGE_NAME: kutcut/user
+  CHART_PATH: ./helm
+  RELEASE_NAME: kutcut-user
+  AKS_RESOURCE_GROUP: rg-kutcut-postech
+  AKS_CLUSTER_NAME: aks-kutcut-postech
+  NAMESPACE: kutcut
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 1. Login no Azure (OIDC)
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID_KAUAN }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID_KAUAN }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID_KAUAN }}
+      # 2. Login no ACR
+      - name: Azure Container Registry Login
+        run: az acr login --name acrkutcutpostech
+
+      # 3. Build e Push da imagem (Versionamento SHA + Latest)
+      - name: Build and push Docker image
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $REGISTRY/$APP_IMAGE_NAME:$IMAGE_TAG -t $REGISTRY/$APP_IMAGE_NAME:latest .
+          docker push $REGISTRY/$APP_IMAGE_NAME:$IMAGE_TAG
+          docker push $REGISTRY/$APP_IMAGE_NAME:latest
+
+      # 4. Conectar no AKS
+      - name: Get AKS credentials
+        run: |
+          az aks get-credentials \
+            --resource-group $AKS_RESOURCE_GROUP \
+            --name $AKS_CLUSTER_NAME \
+            --overwrite-existing \
+            --admin
+
+      # 5. Setup Helm
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.15.1
+
+      # 6. Validação do Chart (Segurança extra antes de aplicar)
+      - name: Helm Lint
+        run: helm lint $CHART_PATH
+
+      - name: Create Namespace
+        run: kubectl create namespace $NAMESPACE --dry-run=client -o yaml | kubectl apply -f -
+      - name: Create ACR Secret
+        run: |
+          kubectl create secret docker-registry acr-secret \
+            --docker-server=$REGISTRY \
+            --docker-username=$(az acr credential show --name acrkutcutpostech --query "username" -o tsv) \
+            --docker-password=$(az acr credential show --name acrkutcutpostech --query "passwords[0].value" -o tsv) \
+            --namespace $NAMESPACE \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      # 7. Executar Migration Job
+      - name: Run Database Migration
+        run: |
+          echo "🧹 Limpando jobs anteriores..."
+          kubectl delete jobs -l app=kutcut-migrations -n $NAMESPACE --ignore-not-found=true
+          
+          echo "🚀 Renderizando e aplicando Job de Migração..."
+          helm template migrator-job $CHART_PATH \
+            --namespace $NAMESPACE \
+            --set image.migratorRepository=$REGISTRY/$APP_IMAGE_NAME \
+            --set image.tag=${{ github.sha }} \
+            --set config.postgres.host="psql-kutcut-postech.postgres.database.azure.com" \
+            --set config.postgres.db="kutcut" \
+            --set secret.postgresUser="${{ secrets.POSTGRES_USER }}" \
+            --set secret.postgresPassword="${{ secrets.POSTGRES_PASSWORD }}" \
+            --set secret.postgresConnectionString="Host=psql-kutcut-postech.postgres.database.azure.com;Database=kutcut;Username=${{ secrets.POSTGRES_USER }};Password=${{ secrets.POSTGRES_PASSWORD }};Port=5432" \
+            --show-only templates/migrator-job.yaml \
+            --show-only templates/configmap.yaml \
+            --show-only templates/secret.yaml | kubectl apply -f -
+          
+          echo "⏳ Aguardando migração finalizar..."
+          kubectl wait --for=condition=complete job -l app=kutcut-migrations -n $NAMESPACE --timeout=300s
+          
+      # 8. Deploy da Aplicação (Com rollback automático)
+      - name: Deploy Application via Helm
+        run: |
+          echo "🚀 Deploy Atômico com Helm em $NAMESPACE..."
+          helm upgrade --install $RELEASE_NAME $CHART_PATH \
+            --namespace $NAMESPACE \
+            --create-namespace \
+            --set image.repository=$REGISTRY/$APP_IMAGE_NAME \
+            --set image.tag=${{ github.sha }} \
+            --set keyVault.enabled=true \
+            --set keyVault.name="kv-kutcut-${{ secrets.KV_SUFFIX }}" \
+            --set keyVault.tenantId="${{ secrets.AZURE_TENANT_ID_KAUAN }}" \
+            --set keyVault.clientId="${{ secrets.KV_IDENTITY_CLIENT_ID }}" \
+            --atomic
