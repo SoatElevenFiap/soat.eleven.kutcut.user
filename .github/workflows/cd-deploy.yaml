@@ -100,7 +100,7 @@ jobs:
             --show-only templates/migrator-job.yaml \
             --show-only templates/configmap.yaml \
             --show-only templates/secretproviderclass.yaml \
-            --show-only templates/serviceaccount.yaml\
+            --show-only templates/serviceaccount.yaml \
             --show-only templates/configmap.yaml |
              kubectl apply -f -
 
