@@ -80,6 +80,12 @@ jobs:
             --namespace $NAMESPACE \
             --dry-run=client -o yaml | kubectl apply -f -
 
+      - name: Debug Directory Structure
+        run: |
+          echo "📍 Diretório atual:" && pwd
+          echo "📂 Listando arquivos na raiz:" && ls -R
+          echo "🏗️ Verificando conteúdo da pasta templates:" && ls -R $CHART_PATH/template
+
       # 7. Executar Migration Job
       - name: Run Database Migration
         run: |
@@ -87,7 +93,7 @@ jobs:
           kubectl delete jobs -l app=kutcut-migrations -n $NAMESPACE --ignore-not-found=true
           
           echo "🚀 Renderizando e aplicando Job de Migração..."
-          helm template migrator-job $CHART_PATH --namespace $NAMESPACE \
+          helm template migrator-job $CHART_PATH --debug --namespace $NAMESPACE \
             --set migrator.repository=$REGISTRY/$APP_IMAGE_NAME-migrator \
             --set migrator.tag="${{ github.sha }}" \
             --set config.postgres.host="psql-kutcut-postech.postgres.database.azure.com" \
