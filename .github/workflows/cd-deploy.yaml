@@ -101,8 +101,7 @@ jobs:
             --show-only templates/configmap.yaml \
             --show-only templates/secretproviderclass.yaml \
             --show-only templates/serviceaccount.yaml \
-            --show-only templates/configmap.yaml |
-             kubectl apply -f -
+            --show-only templates/configmap.yaml | kubectl apply -f -
 
           echo "⏳ Aguardando migração finalizar..."
           kubectl wait --for=condition=complete job -l app=migrator-job-migrator -n kutcut.
