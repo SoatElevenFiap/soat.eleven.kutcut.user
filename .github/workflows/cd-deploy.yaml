@@ -92,9 +92,9 @@ jobs:
             --set secret.postgresUser="${{ secrets.POSTGRES_USER }}" \
             --set secret.postgresPassword="${{ secrets.POSTGRES_PASSWORD }}" \
             --set secret.postgresConnectionString="Host=psql-kutcut-postech.postgres.database.azure.com;Database=kutcut;Username=${{ secrets.POSTGRES_USER }};Password=${{ secrets.POSTGRES_PASSWORD }};Port=5432" \
-            --show-only templates/migrator-job.yaml \
-            --show-only templates/configmap.yaml \
-            --show-only templates/secret.yaml | kubectl apply -f -
+            --show-only helm/templates/migrator-job.yaml \
+            --show-only helm/templates/configmap.yaml \
+            --show-only helm/templates/secret.yaml | kubectl apply -f -
           
           echo "⏳ Aguardando migração finalizar..."
           kubectl wait --for=condition=complete job -l app=kutcut-migrations -n $NAMESPACE --timeout=300s
