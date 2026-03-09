@@ -101,10 +101,10 @@ jobs:
             --set secret.postgresUser="${{ secrets.POSTGRES_USER }}" \
             --set secret.postgresPassword="${{ secrets.POSTGRES_PASSWORD }}" \
             --set keyVault.enabled=true \
-            --show-only kutcut-user/templates/serviceaccount.yaml \
-            --show-only kutcut-user/templates/secretproviderclass.yaml \
-            --show-only kutcut-user/templates/configmap.yaml \
-            --show-only kutcut-user/templates/migrator-job.yaml | kubectl apply -f -
+            --show-only templates/serviceaccount.yaml \
+            --show-only templates/secretproviderclass.yaml \
+            --show-only templates/configmap.yaml \
+            --show-only templates/migrator-job.yaml | kubectl apply -f -
 
           echo "⏳ Aguardando migração finalizar..."
           kubectl wait --for=condition=complete job -l app=migrator-job-migrator -n $NAMESPACE --timeout=120s
