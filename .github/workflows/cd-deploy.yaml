@@ -97,10 +97,9 @@ jobs:
             --set secret.postgresUser="${{ secrets.POSTGRES_USER }}" \
             --set secret.postgresPassword="${{ secrets.POSTGRES_PASSWORD }}" \
             --set secret.postgresConnectionString="Host=psql-kutcut-postech.postgres.database.azure.com;Database=kutcut;Username=${{ secrets.POSTGRES_USER }};Password=${{ secrets.POSTGRES_PASSWORD }};Port=5432" \
-          
+            | kubectl apply -f -
           echo "⏳ Aguardando migração finalizar..."
-          kubectl wait --for=condition=complete job -l app=migrator-job-migrator -n $NAMESPACE --timeout=300s
-          
+
       # 8. Deploy da Aplicação (Com rollback automático)
       - name: Deploy Application via Helm
         run: |
