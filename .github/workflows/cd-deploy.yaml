@@ -84,7 +84,7 @@ jobs:
         run: |
           echo "📍 Diretório atual:" && pwd
           echo "📂 Listando arquivos na raiz:" && ls -R
-          echo "🏗️ Verificando conteúdo da pasta templates:" && ls -R $CHART_PATH/template
+          echo "🏗️ Verificando conteúdo da pasta templates:" && ls -R $CHART_PATH/templates
 
       # 7. Executar Migration Job
       - name: Run Database Migration
